@@ -1,0 +1,54 @@
+version: '3'
+
+networks:
+  data-network:
+
+services:
+  frontend:
+    container_name: featr-frontend-${ENVIRONMENT:-LOCAL}
+    image: featr-frontend:latest
+    ports:
+      - ${FRONTEND_PORT:-8082}:8082
+    environment:
+      - featr.server.url=http://${SERVER_NAME:-localhost}:${SERVER_PORT:-8084}
+      - featr.environment=${ENVIRONMENT:-LOCAL}
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    container_name: featr-server-${ENVIRONMENT:-LOCAL}
+    image: featr-server:latest
+    depends_on:
+      - database
+    networks:
+     - data-network
+    ports:
+      - ${SERVER_PORT:-8084}:8084
+    environment:
+      - spring.data.mongodb.host=database
+      - spring.data.mongodb.port=27017
+      - featr.allowed-origins=http://${SERVER_NAME:-localhost}:${FRONTEND_PORT:-8082}
+      - featr.admin-password=${ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  database:
+    container_name: featr-db-${ENVIRONMENT:-LOCAL}
+    image: mongo
+#    ports:
+#      - 27017:27017
+    networks:
+     - data-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
