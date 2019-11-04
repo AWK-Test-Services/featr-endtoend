@@ -6,11 +6,11 @@ networks:
 services:
   frontend:
     container_name: featr-frontend-${ENVIRONMENT:-LOCAL}
-    image: featr-frontend:latest
+    image: awktestservices/featr-frontend:latest
     ports:
-      - ${FRONTEND_PORT:-8082}:8082
+      - ${FRONTEND_PORT:-8092}:8082
     environment:
-      - featr.server.url=http://${SERVER_NAME:-localhost}:${SERVER_PORT:-8084}
+      - featr.server.url=http://${SERVER_NAME:-localhost}:${SERVER_PORT:-8094}
       - featr.environment=${ENVIRONMENT:-LOCAL}
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
@@ -20,13 +20,15 @@ services:
 
   backend:
     container_name: featr-server-${ENVIRONMENT:-LOCAL}
-    image: featr-server:latest
+    image: awktestservices/featr-server:latest
     depends_on:
       - database
+    volumes:  
+      - ./src/test/features:/repos
     networks:
      - data-network
     ports:
-      - ${SERVER_PORT:-8084}:8084
+      - ${SERVER_PORT:-8094}:8084
     environment:
       - spring.data.mongodb.host=database
       - spring.data.mongodb.port=27017
@@ -41,8 +43,8 @@ services:
   database:
     container_name: featr-db-${ENVIRONMENT:-LOCAL}
     image: mongo
-#    ports:
-#      - 27017:27017
+    ports:
+      - 27017:27017
     networks:
      - data-network
     restart: always
